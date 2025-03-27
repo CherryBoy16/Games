@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthy Diet Restaurant App</title>
+    <link rel="stylesheet" href="static/style.css">
+    <script defer src="static/script.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Healthy Diet Restaurant App</h1>
+    </header>
+    
+    <section class="user-input">
+        <h2>Get Your Custom Meal Plan</h2>
+        <label for="weight">Enter Your Weight (kg):</label>
+        <input type="number" id="weight" name="weight" placeholder="Enter weight">
+        <button onclick="generateMealPlan()">Get Meal Plan</button>
+    </section>
+    
+    <section id="meal-plan">
+        <h2>Recommended Meal Plan</h2>
+        <div id="meal-results"></div>
+    </section>
+    
+    <section class="restaurants">
+        <h2>Healthy Restaurants Near You</h2>
+        <div id="restaurant-list"></div>
+    </section>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Ball Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; text-align: center; font-family: Arial, sans-serif; }
+        canvas { display: block; margin: auto; }
+        #levelDisplay { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: bold; }
+        #controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); }
+        button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="levelDisplay">Level: 1 | Stars: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="controls">
+        <button onclick="restartGame()">Restart</button>
+        <button onclick="resumeGame()">Resume</button>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let ball = { x: 100, y: canvas.height - 100, radius: 20, speedX: 0, speedY: 0, gravity: 0.5, jumpPower: -10 };
+        let levels = [
+            [{ x: 50, y: canvas.height - 50, width: 200, height: 20, isHome: false }, { x: 300, y: canvas.height - 150, width: 200, height: 20, isHome: false }, { x: 600, y: canvas.height - 250, width: 200, height: 20, isHome: true }],
+            [{ x: 50, y: canvas.height - 100, width: 200, height: 20, isHome: false }, { x: 400, y: canvas.height - 200, width: 200, height: 20, isHome: true }]
+        ];
+        let currentLevel = 0;
+        let stars = 0;
+        let platforms = levels[currentLevel];
+        let starsCollected = [];
+        let paused = false;
+        let cameraX = 0;
+        
+        function generateStars() {
+            starsCollected = [
+                { x: 150, y: canvas.height - 120 },
+                { x: 500, y: canvas.height - 220 },
+                { x: 850, y: canvas.height - 320 }
+            ];
+        }
+        generateStars();
+        
+        function restartGame() {
+            currentLevel = 0;
+            stars = 0;
+            platforms = levels[currentLevel];
+            generateStars();
+            ball.x = 100;
+            ball.y = canvas.height - 100;
+            cameraX = 0;
+            document.getElementById("levelDisplay").innerText = `Level: ${currentLevel + 1} | Stars: ${stars}`;
+        }
+        
+        function resumeGame() {
+            paused = false;
+            gameLoop();
+        }
+        
+        let keys = {};
+        window.addEventListener("keydown", (e) => keys[e.code] = true);
+        window.addEventListener("keyup", (e) => keys[e.code] = false);
+        
+        function update() {
+            if (paused) return;
+            if (keys["ArrowLeft"]) ball.speedX = -5;
+            if (keys["ArrowRight"]) ball.speedX = 5;
+            if (!keys["ArrowLeft"] && !keys["ArrowRight"]) ball.speedX = 0;
+            
+            ball.speedY += ball.gravity;
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+            
+            platforms.forEach(platform => {
+                if (
+                    ball.y + ball.radius > platform.y &&
+                    ball.y - ball.radius < platform.y + platform.height &&
+                    ball.x > platform.x &&
+                    ball.x < platform.x + platform.width
+                ) {
+                    ball.y = platform.y - ball.radius;
+                    ball.speedY = 0;
+                    if (keys["Space"]) ball.speedY = ball.jumpPower;
+                    if (platform.isHome) {
+                        nextLevel();
+                    }
+                }
+            });
+            
+            starsCollected = starsCollected.filter(star => {
+                if (Math.abs(ball.x - star.x) < 25 && Math.abs(ball.y - star.y) < 25) {
+                    stars++;
+                    return false;
+                }
+                return true;
+            });
+            
+            cameraX = ball.x - canvas.width / 2;
+        }
+        
+        function nextLevel() {
+            currentLevel++;
+            if (currentLevel >= levels.length) {
+                alert("Congratulations! You completed all levels!");
+                restartGame();
+                return;
+            }
+            platforms = levels[currentLevel];
+            generateStars();
+            ball.x = 100;
+            ball.y = canvas.height - 100;
+            cameraX = 0;
+            document.getElementById("levelDisplay").innerText = `Level: ${currentLevel + 1} | Stars: ${stars}`;
+        }
+        
+        function draw() {
+            let gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, "#ff7e5f");
+            gradient.addColorStop(1, "#feb47b");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            ctx.translate(-cameraX, 0);
+            
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = "green";
+            platforms.forEach(platform => ctx.fillRect(platform.x, platform.y, platform.width, platform.height));
+            
+            ctx.fillStyle = "yellow";
+            starsCollected.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            ctx.restore();
+        }
+        
+        function gameLoop() {
+            if (paused) return;
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+    </script>
+</body>
+</html>
